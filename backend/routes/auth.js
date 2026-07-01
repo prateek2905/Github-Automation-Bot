@@ -4,6 +4,7 @@ const config = require("../config");
 const db = require("../db");
 const logger = require("../lib/logger");
 const { createState, consumeState } = require("../lib/oauthState");
+const { syncInstallation } = require("../lib/github");
 
 const router = express.Router();
 
@@ -63,6 +64,31 @@ router.get("/github/callback", async (req, res) => {
     logger.error({ err }, "github oauth callback error");
     res.status(500).send("Something went wrong during sign-in.");
   }
+});
+
+// Setup URL configured on the GitHub App. GitHub redirects here once a user
+// finishes installing/updating the App. The signed state ties the installation
+// back to the user who clicked "connect a repository" in our dashboard.
+router.get("/github/setup", async (req, res) => {
+  const { installation_id, state } = req.query;
+  if (!installation_id || !state) {
+    return res.status(400).send("Missing installation parameters.");
+  }
+
+  let userId;
+  try {
+    ({ userId } = jwt.verify(state, config.JWT_SECRET));
+  } catch (err) {
+    return res.status(400).send("Invalid or expired installation attempt. Please try connecting again.");
+  }
+
+  try {
+    await syncInstallation(Number(installation_id), userId);
+  } catch (err) {
+    logger.error({ err }, "failed to sync installation");
+  }
+
+  res.redirect(`${config.FRONTEND_URL}/repos`);
 });
 
 router.get("/me", require("../middleware"), async (req, res) => {
