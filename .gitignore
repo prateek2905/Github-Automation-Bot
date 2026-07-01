@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.local
+*.log
+dist/
+build/
+.DS_Store
+backend/generated/
+*.pem
+private-key*.pem
+Event-Driven GitHub Automation Bot-20260701040754.md
