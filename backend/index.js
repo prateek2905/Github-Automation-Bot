@@ -4,6 +4,7 @@ const config = require("./config");
 const logger = require("./lib/logger");
 const webhookRouter = require("./routes/webhook");
 const rootRouter = require("./routes");
+const worker = require("./worker");
 
 const app = express();
 
@@ -21,4 +22,5 @@ app.use("/", rootRouter);
 
 app.listen(config.PORT || 3000, () => {
   logger.info(`Server is running on port ${config.PORT || 3000}`);
+  worker.start();
 });
